@@ -27,7 +27,7 @@ Render.
 | Models | Saved XGBoost + 200-tree Random Forest | New compact HistGradientBoosting pair |
 | Features | 36, includes target-derived `affordability_ratio` | 35, leakage-free |
 | Memory | ~1.25 GB RSS; ~2.3 GB load peak | Designed for a 512 MB instance |
-| Image | `Dockerfile` / `render.yaml` | `Dockerfile.free` / `render-free.yaml` |
+| Image | `Dockerfile` / `render-full.yaml` | `Dockerfile.free` / `render.yaml` |
 | Render | Paid 4 GB instance | **Free 512 MB instance; no card** |
 | Metrics | Original notebook reports (optimistic regression) | Honest held-out test: F1 0.9795, R² 0.9940 |
 
@@ -94,8 +94,8 @@ scripts/
   smoke_test.py                End-to-end artifact + prediction test
 Dockerfile                     Full-profile image
 Dockerfile.free                Free/lite 512 MB image
-render.yaml                    Paid 4 GB full-profile Blueprint
-render-free.yaml               Free 512 MB lite-profile Blueprint
+render.yaml                    Free 512 MB lite-profile Blueprint (default)
+render-full.yaml               Paid 4 GB full-profile Blueprint
 requirements.txt               Full-profile dependencies
 requirements-free.txt          Lite-profile dependencies (no xgboost)
 .dockerignore
@@ -355,7 +355,7 @@ the file in `models/`; do not bake tokens into the Dockerfile.
 1. **Push the repository to GitHub.** The 295 MB regression artifact does not
    need to be committed: the Docker build downloads it and verifies its hash.
 2. In Render, choose **New → Blueprint**, select the repository, and apply
-   `render.yaml`.
+   `render-full.yaml`.
 3. Confirm these settings in the Render dashboard:
    - **Runtime:** Docker
    - **Dockerfile path:** `./Dockerfile`
@@ -389,9 +389,7 @@ leakage-free models on Render's **0.1 CPU / 512 MB Free** instance.
 **Option 1 — Blueprint:**
 
 1. In Render, choose **New → Blueprint** and select this repository.
-2. When prompted for the Blueprint path, use `render-free.yaml` (Render may
-   auto-detect only `render.yaml`; the dashboard lets you choose the file, or
-   create the service manually below).
+2. Render auto-detects the root `render.yaml`, which is now the free profile.
 3. Confirm:
    - Runtime: **Docker**
    - Dockerfile: `./Dockerfile.free`
@@ -400,8 +398,7 @@ leakage-free models on Render's **0.1 CPU / 512 MB Free** instance.
    - Env: `EMI_PROFILE=lite`, `EMI_ENV=production`, `EMI_LOG_LEVEL=INFO`
 4. Create the service. No card is required on the Free plan.
 
-**Option 2 — normal Web Service (recommended if the dashboard only reads
-`render.yaml`):**
+**Option 2 — normal Web Service (if you prefer not to use a Blueprint):**
 
 1. **New → Web Service** → connect the GitHub repo.
 2. Branch `main`.
@@ -426,9 +423,9 @@ Hugging Face Docker Space instead.
 - The Docker build requires outbound access to Docker Hub, PyPI, and the
   Hugging Face URL during the first build. If your build environment blocks
   Hugging Face, pre-place the artifact via Git LFS or a private mirror.
-- Render's free/512 MB instances cannot load the **full** model. Use the
-  `render-free.yaml` lite profile there, or the 4 GB plan for the full model.
-- If you change `render.yaml` to a plan ID your workspace cannot use, the
+- Render's free/512 MB instances cannot load the **full** model. Use the root
+  `render.yaml` lite profile there, or `render-full.yaml` with the 4 GB plan.
+- If you change a Blueprint to a plan ID your workspace cannot use, the
   Blueprint sync will fail; confirm plan availability/pricing in the dashboard.
 
 ---

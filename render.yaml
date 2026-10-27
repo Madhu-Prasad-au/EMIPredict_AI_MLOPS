@@ -1,32 +1,33 @@
-# Render Blueprint for EMIPredict AI.
+# Default Render Blueprint: free/lite profile.
 #
-# The Docker build is defined by ./Dockerfile (dependencies, code, artifact
-# download/verification). The start command is `python entrypoint.py`, which
-# loads both pipelines once and then starts Streamlit bound to Render's PORT.
+# Render auto-detects this root file when creating a Blueprint. You can also
+# create a normal Web Service with:
+#   runtime: docker
+#   dockerfilePath: ./Dockerfile.free
+#   plan: free
+#   healthCheckPath: /_stcore/health
+#   env EMI_PROFILE=lite
 #
-# Memory note: the 295 MB compressed Random Forest expands to roughly 1.25 GB
-# RSS, with a measured ~2.3 GB peak while joblib unpickles it. A 2 GB instance
-# can OOM during startup, so this Blueprint requests a 4 GB plan (`2c-4g`).
-# Adjust only after measuring your own artifact/startup profile.
+# The free instance is 0.1 CPU / 512 MB and sleeps after 15 minutes of
+# inactivity. It runs the compact, leakage-free models, not the full 1.25 GB
+# Random Forest.
 
 services:
   - type: web
-    name: emi-predict-ai
+    name: emi-predict-ai-free
     runtime: docker
-    plan: 2c-4g
+    plan: free
     numInstances: 1
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./Dockerfile.free
     dockerContext: .
     dockerCommand: python entrypoint.py
     healthCheckPath: /_stcore/health
     autoDeployTrigger: commit
-    maxShutdownDelaySeconds: 60
+    maxShutdownDelaySeconds: 30
 
-    # No application secrets are required for the public Hugging Face artifact.
-    # If you later host the model privately, add the token as a Render secret
-    # and adapt the Docker build (do not hardcode it here). Render injects PORT
-    # automatically; do not define it.
     envVars:
+      - key: EMI_PROFILE
+        value: lite
       - key: EMI_ENV
         value: production
       - key: EMI_LOG_LEVEL
