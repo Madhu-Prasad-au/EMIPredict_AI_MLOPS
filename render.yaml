@@ -17,13 +17,11 @@ services:
     name: emi-predict-ai-free
     runtime: docker
     plan: free
-    numInstances: 1
     dockerfilePath: ./Dockerfile.free
     dockerContext: .
     dockerCommand: python entrypoint.py
     healthCheckPath: /_stcore/health
     autoDeployTrigger: commit
-    maxShutdownDelaySeconds: 30
 
     envVars:
       - key: EMI_PROFILE
