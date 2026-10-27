@@ -1,0 +1,288 @@
+{
+  "generated_at_utc": "2026-10-27T17:03:06+00:00",
+  "source": "data/emi_prediction_cleaned.csv",
+  "records": 404800,
+  "engineered_medians": {
+    "total_monthly_expenses": 36700.0,
+    "total_debt_burden": 40600.0,
+    "debt_to_income_ratio": 0.77913,
+    "expense_to_income_ratio": 0.700532,
+    "current_emi_to_income": 0.0,
+    "loan_to_salary_ratio": 4.78735,
+    "balance_to_salary_ratio": 4.241296,
+    "emergency_coverage_ratio": 2.145322,
+    "remaining_income": 10600.0,
+    "estimated_requested_emi": 10470.588235,
+    "affordability_ratio": 0.085299
+  },
+  "numeric_medians": {
+    "age": 38.0,
+    "monthly_salary": 51700.0,
+    "years_of_employment": 3.2,
+    "monthly_rent": 0.0,
+    "family_size": 3.0,
+    "dependents": 2.0,
+    "school_fees": 3000.0,
+    "college_fees": 0.0,
+    "travel_expenses": 4900.0,
+    "groceries_utilities": 11400.0,
+    "other_monthly_expenses": 6000.0,
+    "current_emi_amount": 0.0,
+    "credit_score": 701.0,
+    "bank_balance": 196000.0,
+    "emergency_fund": 74000.0,
+    "requested_amount": 236000.0,
+    "requested_tenure": 25.0,
+    "max_monthly_emi": 4211.2,
+    "total_monthly_expenses": 36700.0,
+    "total_debt_burden": 40600.0,
+    "debt_to_income_ratio": 0.77913,
+    "expense_to_income_ratio": 0.700532,
+    "current_emi_to_income": 0.0,
+    "loan_to_salary_ratio": 4.78735,
+    "balance_to_salary_ratio": 4.241296,
+    "emergency_coverage_ratio": 2.145322,
+    "remaining_income": 10600.0,
+    "estimated_requested_emi": 10470.588235,
+    "affordability_ratio": 0.085299
+  },
+  "categorical_modes": {
+    "gender": "Male",
+    "marital_status": "Married",
+    "education": "Graduate",
+    "employment_type": "Private",
+    "company_type": "Large Indian",
+    "house_type": "Rented",
+    "existing_loans": "No",
+    "emi_scenario": "Home Appliances EMI",
+    "emi_eligibility": "Not_Eligible"
+  },
+  "observed_ranges": {
+    "age": {
+      "min": 26.0,
+      "max": 59.0,
+      "p01": 27.0,
+      "p99": 58.0
+    },
+    "monthly_salary": {
+      "min": 3967.0,
+      "max": 499970.0,
+      "p01": 12000.0,
+      "p99": 175900.0
+    },
+    "years_of_employment": {
+      "min": 0.5,
+      "max": 36.0,
+      "p01": 0.5,
+      "p99": 27.4
+    },
+    "monthly_rent": {
+      "min": 0.0,
+      "max": 80000.0,
+      "p01": 0.0,
+      "p99": 34300.0
+    },
+    "family_size": {
+      "min": 1.0,
+      "max": 5.0,
+      "p01": 1.0,
+      "p99": 5.0
+    },
+    "dependents": {
+      "min": 0.0,
+      "max": 4.0,
+      "p01": 0.0,
+      "p99": 4.0
+    },
+    "school_fees": {
+      "min": 0.0,
+      "max": 15000.0,
+      "p01": 0.0,
+      "p99": 14800.0
+    },
+    "college_fees": {
+      "min": 0.0,
+      "max": 25000.0,
+      "p01": 0.0,
+      "p99": 24300.0
+    },
+    "travel_expenses": {
+      "min": 600.0,
+      "max": 30300.0,
+      "p01": 1200.0,
+      "p99": 16800.0
+    },
+    "groceries_utilities": {
+      "min": 1800.0,
+      "max": 71200.0,
+      "p01": 3000.0,
+      "p99": 35200.0
+    },
+    "other_monthly_expenses": {
+      "min": 600.0,
+      "max": 42900.0,
+      "p01": 1300.0,
+      "p99": 22000.0
+    },
+    "current_emi_amount": {
+      "min": 0.0,
+      "max": 56300.0,
+      "p01": 0.0,
+      "p99": 28700.0
+    },
+    "credit_score": {
+      "min": 0.0,
+      "max": 1200.0,
+      "p01": 532.0,
+      "p99": 850.0
+    },
+    "bank_balance": {
+      "min": 0.0,
+      "max": 1717300.0,
+      "p01": 19600.0,
+      "p99": 846500.0
+    },
+    "emergency_fund": {
+      "min": 1400.0,
+      "max": 891500.0,
+      "p01": 6700.0,
+      "p99": 383801.0
+    },
+    "requested_amount": {
+      "min": 10000.0,
+      "max": 1500000.0,
+      "p01": 20000.0,
+      "p99": 1430000.0
+    },
+    "requested_tenure": {
+      "min": 3.0,
+      "max": 84.0,
+      "p01": 4.0,
+      "p99": 81.0
+    },
+    "max_monthly_emi": {
+      "min": 500.0,
+      "max": 91040.4,
+      "p01": 500.0,
+      "p99": 34782.0
+    },
+    "total_monthly_expenses": {
+      "min": 3400.0,
+      "max": 207500.0,
+      "p01": 8600.0,
+      "p99": 103300.0
+    },
+    "total_debt_burden": {
+      "min": 3600.0,
+      "max": 247800.0,
+      "p01": 9500.0,
+      "p99": 117200.0
+    },
+    "debt_to_income_ratio": {
+      "min": 0.011144,
+      "max": 31.291979,
+      "p01": 0.303468,
+      "p99": 2.40556
+    },
+    "expense_to_income_ratio": {
+      "min": 0.011144,
+      "max": 26.776607,
+      "p01": 0.294491,
+      "p99": 2.288889
+    },
+    "current_emi_to_income": {
+      "min": 0.0,
+      "max": 7.704465,
+      "p01": 0.0,
+      "p99": 0.296784
+    },
+    "loan_to_salary_ratio": {
+      "min": 0.022716,
+      "max": 294.556887,
+      "p01": 0.282186,
+      "p99": 53.955556
+    },
+    "balance_to_salary_ratio": {
+      "min": 0.0,
+      "max": 218.462139,
+      "p01": 0.540173,
+      "p99": 7.98961
+    },
+    "emergency_coverage_ratio": {
+      "min": 0.033482,
+      "max": 16.947917,
+      "p01": 0.222985,
+      "p99": 8.746009
+    },
+    "remaining_income": {
+      "min": -161883.0,
+      "max": 485540.0,
+      "p01": -28600.0,
+      "p99": 87900.0
+    },
+    "estimated_requested_emi": {
+      "min": 416.666667,
+      "max": 124583.333333,
+      "p01": 1071.428571,
+      "p99": 68300.0
+    },
+    "affordability_ratio": {
+      "min": 0.001,
+      "max": 9.205366,
+      "p01": 0.004936,
+      "p99": 0.393637
+    }
+  },
+  "categorical_values": {
+    "gender": [
+      "Female",
+      "Male"
+    ],
+    "marital_status": [
+      "Married",
+      "Single"
+    ],
+    "education": [
+      "Graduate",
+      "High School",
+      "Post Graduate",
+      "Professional"
+    ],
+    "employment_type": [
+      "Government",
+      "Private",
+      "Self-employed"
+    ],
+    "company_type": [
+      "Large Indian",
+      "MNC",
+      "Mid-size",
+      "Small",
+      "Startup"
+    ],
+    "house_type": [
+      "Family",
+      "Own",
+      "Rented"
+    ],
+    "existing_loans": [
+      "No",
+      "Yes"
+    ],
+    "emi_scenario": [
+      "E-commerce Shopping EMI",
+      "Education EMI",
+      "Home Appliances EMI",
+      "Personal Loan EMI",
+      "Vehicle EMI"
+    ],
+    "emi_eligibility": [
+      "Eligible",
+      "High_Risk",
+      "Not_Eligible"
+    ]
+  },
+  "notes": {
+    "affordability_ratio": "During training this feature was computed as max_monthly_emi / monthly_salary, i.e. it contains the regression target. At inference it is reconstructed iteratively from the regression model's own prediction divided by salary. The stored median below is for reference only and is not used as a fill value."
+  }
+}

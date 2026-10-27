@@ -1,0 +1,25 @@
+# EMIPredict AI runtime dependencies.
+#
+# These pins match the environment that saved the artifacts. The artifact
+# metadata in classification_label_encoder.pkl reports scikit-learn 1.9.0; the
+# training environment also had xgboost 3.4.1, pandas 2.3.3, numpy 2.5.2 and
+# joblib 1.5.3. Keep these aligned with the artifacts rather than upgrading
+# casually: a different scikit-learn/XGBoost combination can fail to unpickle or
+# silently change inference behaviour.
+#
+# Verified locally with Python 3.12.13.
+streamlit==1.62.0
+pandas==2.3.3
+numpy==2.5.2
+scikit-learn==1.9.0
+# CPU-only distribution of the same XGBoost 3.4.1 codebase. The full `xgboost`
+# wheel pulls in CUDA/NCCL packages that are unnecessary for inference and add
+# hundreds of MB to the image. `xgboost-cpu` provides the same importable
+# `xgboost` module and pickle compatibility.
+xgboost-cpu==3.4.1
+joblib==1.5.3
+scipy==1.18.1
+pyarrow==25.0.1
+# Explicit transitive pin so the resolver does not have to choose between
+# Pillow 13 (not yet allowed by Streamlit 1.62) and older wheels.
+pillow==12.3.0

@@ -1,0 +1,509 @@
+{
+  "generated_at_utc": "2026-10-27T17:03:06+00:00",
+  "source": "data/emi_prediction_cleaned.csv",
+  "records": 404800,
+  "columns": 38,
+  "class_counts": {
+    "Not_Eligible": 312868,
+    "Eligible": 74444,
+    "High_Risk": 17488
+  },
+  "scenario_counts": {
+    "Home Appliances EMI": 80988,
+    "Personal Loan EMI": 80980,
+    "E-commerce Shopping EMI": 80948,
+    "Education EMI": 80942,
+    "Vehicle EMI": 80942
+  },
+  "numeric": {
+    "age": {
+      "min": 26.0,
+      "p01": 27.0,
+      "p05": 27.0,
+      "median": 38.0,
+      "mean": 38.87586,
+      "p95": 58.0,
+      "p99": 58.0,
+      "max": 59.0
+    },
+    "monthly_salary": {
+      "min": 3967.0,
+      "p01": 12000.0,
+      "p05": 19500.0,
+      "median": 51700.0,
+      "mean": 59501.88753,
+      "p95": 115700.0,
+      "p99": 175900.0,
+      "max": 499970.0
+    },
+    "years_of_employment": {
+      "min": 0.5,
+      "p01": 0.5,
+      "p05": 0.5,
+      "median": 3.2,
+      "mean": 5.364079,
+      "p95": 17.5,
+      "p99": 27.4,
+      "max": 36.0
+    },
+    "monthly_rent": {
+      "min": 0.0,
+      "p01": 0.0,
+      "p05": 0.0,
+      "median": 0.0,
+      "mean": 5793.516126,
+      "p95": 23400.0,
+      "p99": 34300.0,
+      "max": 80000.0
+    },
+    "family_size": {
+      "min": 1.0,
+      "p01": 1.0,
+      "p05": 1.0,
+      "median": 3.0,
+      "mean": 2.940425,
+      "p95": 5.0,
+      "p99": 5.0,
+      "max": 5.0
+    },
+    "dependents": {
+      "min": 0.0,
+      "p01": 0.0,
+      "p05": 0.0,
+      "median": 2.0,
+      "mean": 1.940425,
+      "p95": 4.0,
+      "p99": 4.0,
+      "max": 4.0
+    },
+    "school_fees": {
+      "min": 0.0,
+      "p01": 0.0,
+      "p05": 0.0,
+      "median": 3000.0,
+      "mean": 4624.575593,
+      "p95": 13800.0,
+      "p99": 14800.0,
+      "max": 15000.0
+    },
+    "college_fees": {
+      "min": 0.0,
+      "p01": 0.0,
+      "p05": 0.0,
+      "median": 0.0,
+      "mean": 4066.253706,
+      "p95": 21300.0,
+      "p99": 24300.0,
+      "max": 25000.0
+    },
+    "travel_expenses": {
+      "min": 600.0,
+      "p01": 1200.0,
+      "p05": 1700.0,
+      "median": 4900.0,
+      "mean": 5687.497777,
+      "p95": 12300.0,
+      "p99": 16800.0,
+      "max": 30300.0
+    },
+    "groceries_utilities": {
+      "min": 1800.0,
+      "p01": 3000.0,
+      "p05": 4300.0,
+      "median": 11400.0,
+      "mean": 12804.999506,
+      "p95": 26400.0,
+      "p99": 35200.0,
+      "max": 71200.0
+    },
+    "other_monthly_expenses": {
+      "min": 600.0,
+      "p01": 1300.0,
+      "p05": 2000.0,
+      "median": 6000.0,
+      "mean": 7119.309783,
+      "p95": 16000.0,
+      "p99": 22000.0,
+      "max": 42900.0
+    },
+    "current_emi_amount": {
+      "min": 0.0,
+      "p01": 0.0,
+      "p05": 0.0,
+      "median": 0.0,
+      "mean": 4543.407609,
+      "p95": 19100.0,
+      "p99": 28700.0,
+      "max": 56300.0
+    },
+    "credit_score": {
+      "min": 0.0,
+      "p01": 532.0,
+      "p05": 586.0,
+      "median": 701.0,
+      "mean": 700.857083,
+      "p95": 820.0,
+      "p99": 850.0,
+      "max": 1200.0
+    },
+    "bank_balance": {
+      "min": 0.0,
+      "p01": 19600.0,
+      "p05": 37400.0,
+      "median": 196000.0,
+      "mean": 241406.791502,
+      "p95": 602700.0,
+      "p99": 846500.0,
+      "max": 1717300.0
+    },
+    "emergency_fund": {
+      "min": 1400.0,
+      "p01": 6700.0,
+      "p05": 13400.0,
+      "median": 74000.0,
+      "mean": 96636.813488,
+      "p95": 257800.0,
+      "p99": 383801.0,
+      "max": 891500.0
+    },
+    "requested_amount": {
+      "min": 10000.0,
+      "p01": 20000.0,
+      "p05": 42000.0,
+      "median": 236000.0,
+      "mean": 370855.400198,
+      "p95": 1147000.0,
+      "p99": 1430000.0,
+      "max": 1500000.0
+    },
+    "requested_tenure": {
+      "min": 3.0,
+      "p01": 4.0,
+      "p05": 7.0,
+      "median": 25.0,
+      "mean": 29.126677,
+      "p95": 66.0,
+      "p99": 81.0,
+      "max": 84.0
+    },
+    "max_monthly_emi": {
+      "min": 500.0,
+      "p01": 500.0,
+      "p05": 500.0,
+      "median": 4211.2,
+      "mean": 6763.602156,
+      "p95": 22450.0,
+      "p99": 34782.0,
+      "max": 91040.4
+    },
+    "total_monthly_expenses": {
+      "min": 3400.0,
+      "p01": 8600.0,
+      "p05": 13600.0,
+      "median": 36700.0,
+      "mean": 40096.15249,
+      "p95": 78100.0,
+      "p99": 103300.0,
+      "max": 207500.0
+    },
+    "total_debt_burden": {
+      "min": 3600.0,
+      "p01": 9500.0,
+      "p05": 15100.0,
+      "median": 40600.0,
+      "mean": 44639.560099,
+      "p95": 88300.0,
+      "p99": 117200.0,
+      "max": 247800.0
+    },
+    "debt_to_income_ratio": {
+      "min": 0.011144,
+      "p01": 0.303468,
+      "p05": 0.413897,
+      "median": 0.77913,
+      "mean": 0.86722,
+      "p95": 1.460607,
+      "p99": 2.40556,
+      "max": 31.291979
+    },
+    "expense_to_income_ratio": {
+      "min": 0.011144,
+      "p01": 0.294491,
+      "p05": 0.387755,
+      "median": 0.700532,
+      "mean": 0.783655,
+      "p95": 1.358081,
+      "p99": 2.288889,
+      "max": 26.776607
+    },
+    "current_emi_to_income": {
+      "min": 0.0,
+      "p01": 0.0,
+      "p05": 0.0,
+      "median": 0.0,
+      "mean": 0.083565,
+      "p95": 0.276018,
+      "p99": 0.296784,
+      "max": 7.704465
+    },
+    "loan_to_salary_ratio": {
+      "min": 0.022716,
+      "p01": 0.282186,
+      "p05": 0.673656,
+      "median": 4.78735,
+      "mean": 8.71709,
+      "p95": 29.3125,
+      "p99": 53.955556,
+      "max": 294.556887
+    },
+    "balance_to_salary_ratio": {
+      "min": 0.0,
+      "p01": 0.540173,
+      "p05": 0.832446,
+      "median": 4.241296,
+      "mean": 4.446613,
+      "p95": 7.681818,
+      "p99": 7.98961,
+      "max": 218.462139
+    },
+    "emergency_coverage_ratio": {
+      "min": 0.033482,
+      "p01": 0.222985,
+      "p05": 0.41573,
+      "median": 2.145322,
+      "mean": 2.58944,
+      "p95": 6.338356,
+      "p99": 8.746009,
+      "max": 16.947917
+    },
+    "remaining_income": {
+      "min": -161883.0,
+      "p01": -28600.0,
+      "p05": -15900.0,
+      "median": 10600.0,
+      "mean": 14862.327431,
+      "p95": 47200.0,
+      "p99": 87900.0,
+      "max": 485540.0
+    },
+    "estimated_requested_emi": {
+      "min": 416.666667,
+      "p01": 1071.428571,
+      "p05": 2000.0,
+      "median": 10470.588235,
+      "mean": 14755.974794,
+      "p95": 42750.0,
+      "p99": 68300.0,
+      "max": 124583.333333
+    },
+    "affordability_ratio": {
+      "min": 0.001,
+      "p01": 0.004936,
+      "p05": 0.007974,
+      "median": 0.085299,
+      "mean": 0.115709,
+      "p95": 0.305772,
+      "p99": 0.393637,
+      "max": 9.205366
+    }
+  },
+  "categorical": {
+    "gender": {
+      "Male": 242950,
+      "Female": 161850
+    },
+    "marital_status": {
+      "Married": 307837,
+      "Single": 96963
+    },
+    "education": {
+      "Graduate": 183419,
+      "Post Graduate": 100314,
+      "High School": 60732,
+      "Professional": 60335
+    },
+    "employment_type": {
+      "Private": 283099,
+      "Government": 81167,
+      "Self-employed": 40534
+    },
+    "company_type": {
+      "Large Indian": 121139,
+      "MNC": 101409,
+      "Mid-size": 101301,
+      "Startup": 60706,
+      "Small": 20245
+    },
+    "house_type": {
+      "Rented": 161601,
+      "Own": 142307,
+      "Family": 100892
+    },
+    "existing_loans": {
+      "No": 243227,
+      "Yes": 161573
+    },
+    "emi_scenario": {
+      "Home Appliances EMI": 80988,
+      "Personal Loan EMI": 80980,
+      "E-commerce Shopping EMI": 80948,
+      "Education EMI": 80942,
+      "Vehicle EMI": 80942
+    },
+    "emi_eligibility": {
+      "Not_Eligible": 312868,
+      "Eligible": 74444,
+      "High_Risk": 17488
+    }
+  },
+  "correlation": {
+    "monthly_salary": {
+      "monthly_salary": 1.0,
+      "current_emi_amount": 0.2067,
+      "bank_balance": 0.4244,
+      "emergency_fund": 0.384,
+      "requested_amount": -0.0022,
+      "requested_tenure": -0.0003,
+      "debt_to_income_ratio": -0.2521,
+      "expense_to_income_ratio": -0.2606,
+      "affordability_ratio": -0.0183,
+      "credit_score": 0.0683,
+      "max_monthly_emi": 0.3793
+    },
+    "current_emi_amount": {
+      "monthly_salary": 0.2067,
+      "current_emi_amount": 1.0,
+      "bank_balance": 0.2122,
+      "emergency_fund": 0.1908,
+      "requested_amount": 0.0013,
+      "requested_tenure": -0.0018,
+      "debt_to_income_ratio": 0.1105,
+      "expense_to_income_ratio": -0.0421,
+      "affordability_ratio": -0.2587,
+      "credit_score": -0.1358,
+      "max_monthly_emi": -0.2424
+    },
+    "bank_balance": {
+      "monthly_salary": 0.4244,
+      "current_emi_amount": 0.2122,
+      "bank_balance": 1.0,
+      "emergency_fund": 0.8962,
+      "requested_amount": -0.0001,
+      "requested_tenure": -0.0012,
+      "debt_to_income_ratio": -0.0748,
+      "expense_to_income_ratio": -0.085,
+      "affordability_ratio": 0.1451,
+      "credit_score": 0.0708,
+      "max_monthly_emi": 0.4571
+    },
+    "emergency_fund": {
+      "monthly_salary": 0.384,
+      "current_emi_amount": 0.1908,
+      "bank_balance": 0.8962,
+      "emergency_fund": 1.0,
+      "requested_amount": -0.0007,
+      "requested_tenure": -0.001,
+      "debt_to_income_ratio": -0.0684,
+      "expense_to_income_ratio": -0.0774,
+      "affordability_ratio": 0.1321,
+      "credit_score": 0.0638,
+      "max_monthly_emi": 0.414
+    },
+    "requested_amount": {
+      "monthly_salary": -0.0022,
+      "current_emi_amount": 0.0013,
+      "bank_balance": -0.0001,
+      "emergency_fund": -0.0007,
+      "requested_amount": 1.0,
+      "requested_tenure": 0.4814,
+      "debt_to_income_ratio": 0.0011,
+      "expense_to_income_ratio": 0.0009,
+      "affordability_ratio": -0.0015,
+      "credit_score": 0.0007,
+      "max_monthly_emi": -0.002
+    },
+    "requested_tenure": {
+      "monthly_salary": -0.0003,
+      "current_emi_amount": -0.0018,
+      "bank_balance": -0.0012,
+      "emergency_fund": -0.001,
+      "requested_amount": 0.4814,
+      "requested_tenure": 1.0,
+      "debt_to_income_ratio": -0.0005,
+      "expense_to_income_ratio": -0.0002,
+      "affordability_ratio": 0.0005,
+      "credit_score": 0.0006,
+      "max_monthly_emi": 0.001
+    },
+    "debt_to_income_ratio": {
+      "monthly_salary": -0.2521,
+      "current_emi_amount": 0.1105,
+      "bank_balance": -0.0748,
+      "emergency_fund": -0.0684,
+      "requested_amount": 0.0011,
+      "requested_tenure": -0.0005,
+      "debt_to_income_ratio": 1.0,
+      "expense_to_income_ratio": 0.9772,
+      "affordability_ratio": 0.1067,
+      "credit_score": -0.0428,
+      "max_monthly_emi": -0.3079
+    },
+    "expense_to_income_ratio": {
+      "monthly_salary": -0.2606,
+      "current_emi_amount": -0.0421,
+      "bank_balance": -0.085,
+      "emergency_fund": -0.0774,
+      "requested_amount": 0.0009,
+      "requested_tenure": -0.0002,
+      "debt_to_income_ratio": 0.9772,
+      "expense_to_income_ratio": 1.0,
+      "affordability_ratio": 0.1565,
+      "credit_score": -0.0091,
+      "max_monthly_emi": -0.268
+    },
+    "affordability_ratio": {
+      "monthly_salary": -0.0183,
+      "current_emi_amount": -0.2587,
+      "bank_balance": 0.1451,
+      "emergency_fund": 0.1321,
+      "requested_amount": -0.0015,
+      "requested_tenure": 0.0005,
+      "debt_to_income_ratio": 0.1067,
+      "expense_to_income_ratio": 0.1565,
+      "affordability_ratio": 1.0,
+      "credit_score": 0.1577,
+      "max_monthly_emi": 0.5687
+    },
+    "credit_score": {
+      "monthly_salary": 0.0683,
+      "current_emi_amount": -0.1358,
+      "bank_balance": 0.0708,
+      "emergency_fund": 0.0638,
+      "requested_amount": 0.0007,
+      "requested_tenure": 0.0006,
+      "debt_to_income_ratio": -0.0428,
+      "expense_to_income_ratio": -0.0091,
+      "affordability_ratio": 0.1577,
+      "credit_score": 1.0,
+      "max_monthly_emi": 0.2288
+    },
+    "max_monthly_emi": {
+      "monthly_salary": 0.3793,
+      "current_emi_amount": -0.2424,
+      "bank_balance": 0.4571,
+      "emergency_fund": 0.414,
+      "requested_amount": -0.002,
+      "requested_tenure": 0.001,
+      "debt_to_income_ratio": -0.3079,
+      "expense_to_income_ratio": -0.268,
+      "affordability_ratio": 0.5687,
+      "credit_score": 0.2288,
+      "max_monthly_emi": 1.0
+    }
+  },
+  "sample": {
+    "method": "proportional stratified sample by emi_eligibility + emi_scenario",
+    "rows": 60000,
+    "random_state": 42
+  }
+}

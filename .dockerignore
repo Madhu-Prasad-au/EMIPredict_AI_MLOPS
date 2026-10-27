@@ -1,0 +1,76 @@
+# ---------------------------------------------------------------------------
+# Version control / CI / local environment
+# ---------------------------------------------------------------------------
+.git
+.gitignore
+.gitattributes
+.github
+.gitlab-ci.yml
+
+.venv
+venv
+env
+ENV
+__pycache__
+*.py[cod]
+*.pyo
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+htmlcov
+
+# ---------------------------------------------------------------------------
+# Notebooks and checkpoints
+# ---------------------------------------------------------------------------
+*.ipynb
+.ipynb_checkpoints
+**/.ipynb_checkpoints
+
+# ---------------------------------------------------------------------------
+# Raw / full data that must not ship in the image
+# ---------------------------------------------------------------------------
+emi_prediction_dataset.csv
+data/emi_prediction_cleaned.csv
+data/financial_records.csv
+data/**
+!data/eda_sample.csv.gz
+!data/eda_summary.json
+
+# ---------------------------------------------------------------------------
+# Model artifacts
+# ---------------------------------------------------------------------------
+# Keep the small required artifacts and the 295 MB compressed regression model.
+# Exclude the 1.1 GB uncompressed model and any partial downloads.
+models/best_regression_model.pkl
+models/*.part
+
+# ---------------------------------------------------------------------------
+# Secrets, logs, temp/debug files
+# ---------------------------------------------------------------------------
+.streamlit/secrets.toml
+.env
+.env.*
+*.log
+*.tmp
+*.part
+.tmp
+_hf_model.pkl
+_inspect*.py
+_inspect*.txt
+_notebook_dump.txt
+_model_inspection.txt
+_test_*.py
+_debug_*.py
+_measure_memory.py
+_wslc_pull.log
+_tmp*
+
+# ---------------------------------------------------------------------------
+# Docs / dev-only files (not needed inside the runtime image)
+# ---------------------------------------------------------------------------
+README.md
+EXP1*.ipynb
+scripts/prepare_assets.py
+tests
+docs

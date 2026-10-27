@@ -1,0 +1,10 @@
+[theme]
+base = "light"
+
+[server]
+headless = true
+fileWatcherType = "none"
+maxUploadSize = 10
+
+[browser]
+gatherUsageStats = false

@@ -1,0 +1,102 @@
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments / local interpreters
+.venv/
+venv/
+env/
+ENV/
+*.conda
+
+# ---------------------------------------------------------------------------
+# Jupyter / notebooks
+# ---------------------------------------------------------------------------
+.ipynb_checkpoints/
+*.ipynb
+# Keep the original training notebook for provenance (small; excluded from the
+# Docker image and not needed at runtime).
+!EXP1(1).ipynb
+
+# ---------------------------------------------------------------------------
+# IDE / OS
+# ---------------------------------------------------------------------------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------------------------------------------------------------------------
+# Secrets and local configuration
+# ---------------------------------------------------------------------------
+.streamlit/secrets.toml
+.env
+.env.*
+*.pem
+*.key
+
+# ---------------------------------------------------------------------------
+# Large data (kept local; the app ships a compact EDA sample instead)
+# ---------------------------------------------------------------------------
+emi_prediction_dataset.csv
+data/emi_prediction_cleaned.csv
+data/financial_records.csv
+
+# ---------------------------------------------------------------------------
+# Model artifacts
+# ---------------------------------------------------------------------------
+# The 1.1 GB uncompressed artifact and the 295 MB compressed artifact are not
+# committed. The Docker build copies the compressed file when present locally
+# and otherwise downloads it from Hugging Face with a SHA-256 check.
+models/best_regression_model.pkl
+models/best_regression_model_compressed.pkl
+models/*.part
+
+# Small, required artifacts that SHOULD be committed:
+#   models/best_classification_model.pkl
+#   models/classification_label_encoder.pkl
+#   models/feature_info.pkl
+#   models/preprocessing_stats.json
+
+# ---------------------------------------------------------------------------
+# MLflow / experiment tracking
+# ---------------------------------------------------------------------------
+mlruns/
+mlartifacts/
+mlflow.db
+
+# ---------------------------------------------------------------------------
+# Logs, temp files, local databases
+# ---------------------------------------------------------------------------
+*.log
+*.tmp
+*.temp
+.tmp/
+*.part
+*.db
+*.sqlite
+*.sqlite3
+
+# ---------------------------------------------------------------------------
+# Local test/verification scratch files
+# ---------------------------------------------------------------------------
+_hf_model.pkl
+_inspect_models.py
+_inspect_target.py
+_inspect_notebook.py
+_notebook_dump.txt
+_model_inspection.txt
+_test_*.py
+_debug_*.py
+_measure_memory.py
+_wslc_pull.log
