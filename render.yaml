@@ -18,10 +18,7 @@ services:
     runtime: docker
     plan: free
     dockerfilePath: ./Dockerfile.free
-    dockerContext: .
-    dockerCommand: python entrypoint.py
     healthCheckPath: /_stcore/health
-    autoDeployTrigger: commit
 
     envVars:
       - key: EMI_PROFILE
