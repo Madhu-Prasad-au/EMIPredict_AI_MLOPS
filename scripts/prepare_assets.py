@@ -21,10 +21,12 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "data" / "emi_prediction_cleaned.csv"
 SAMPLE_OUT = ROOT / "data" / "eda_sample.csv.gz"
+SAMPLE_LITE_OUT = ROOT / "data" / "eda_sample_lite.csv.gz"
 SUMMARY_OUT = ROOT / "data" / "eda_summary.json"
 STATS_OUT = ROOT / "models" / "preprocessing_stats.json"
 
 SAMPLE_SIZE = 60_000
+SAMPLE_SIZE_LITE = 20_000
 RANDOM_STATE = 42
 
 CATEGORICAL_COLUMNS = [
@@ -232,10 +234,19 @@ def main() -> None:
     print(f"Wrote {STATS_OUT} ({STATS_OUT.stat().st_size / 1024:.1f} KiB)")
 
     # ------------------------------------------------------------
-    # Stratified sample
+    # Stratified samples
     # ------------------------------------------------------------
-    print("Building stratified sample ...")
-    frac = min(1.0, SAMPLE_SIZE / len(df))
+    _write_stratified_sample(df, SAMPLE_SIZE, SAMPLE_OUT, "full")
+    _write_stratified_sample(df, SAMPLE_SIZE_LITE, SAMPLE_LITE_OUT, "lite")
+
+    print("Done.")
+
+
+def _write_stratified_sample(
+    df: pd.DataFrame, size: int, output: Path, label: str
+) -> None:
+    print(f"Building {label} stratified sample ({size:,} rows) ...")
+    frac = min(1.0, size / len(df))
     parts = []
     rng = np.random.default_rng(RANDOM_STATE)
     for _, group in df.groupby(["emi_eligibility", "emi_scenario"], sort=False):
@@ -248,15 +259,13 @@ def main() -> None:
             parts.append(group.loc[idx])
     sample = pd.concat(parts).sample(frac=1.0, random_state=RANDOM_STATE)
     sample = sample.reset_index(drop=True)
-    sample.to_csv(SAMPLE_OUT, index=False, compression="gzip")
+    sample.to_csv(output, index=False, compression="gzip")
     print(
-        f"Wrote {SAMPLE_OUT} ({SAMPLE_OUT.stat().st_size / 1024 / 1024:.1f} MiB, "
+        f"Wrote {output} ({output.stat().st_size / 1024 / 1024:.1f} MiB, "
         f"{len(sample):,} rows)"
     )
     print("Class balance in sample:")
     print(sample["emi_eligibility"].value_counts().to_string())
-
-    print("Done.")
 
 
 if __name__ == "__main__":

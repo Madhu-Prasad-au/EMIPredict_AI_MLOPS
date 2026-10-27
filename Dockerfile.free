@@ -1,0 +1,72 @@
+# EMIPredict AI — free/lite image for Render Free (512 MB).
+#
+# Build:  docker build -f Dockerfile.free -t emi-predict-ai:free .
+# Run:    docker run --rm -p 8501:8501 -e PORT=8501 emi-predict-ai:free
+#
+# This image contains only the compact, leakage-free HistGradientBoosting
+# models. It does not install xgboost and does not download the 295 MB full
+# regression artifact.
+
+FROM python:3.12-slim-bookworm
+
+LABEL org.opencontainers.image.title="emi-predict-ai-free" \
+      org.opencontainers.image.description="Compact EMI prediction app for 512 MB instances" \
+      org.opencontainers.image.version="1.0.0"
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    EMI_PROFILE=lite \
+    STREAMLIT_SERVER_HEADLESS=true \
+    STREAMLIT_BROWSER_GATHER_USAGE_STATS=false \
+    STREAMLIT_SERVER_FILE_WATCHER_TYPE=none \
+    OMP_NUM_THREADS=1 \
+    OPENBLAS_NUM_THREADS=1 \
+    MKL_NUM_THREADS=1 \
+    LOKY_MAX_CPU_COUNT=1 \
+    JOBLIB_MULTIPROCESSING=0 \
+    HOME=/home/app
+
+WORKDIR /app
+
+# libgomp1 is used by scikit-learn's OpenMP-backed HistGradientBoosting.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN groupadd --gid 10001 app \
+    && useradd --uid 10001 --gid app --create-home --shell /usr/sbin/nologin app
+
+COPY requirements-free.txt ./
+# Keep the Pillow preinstall workaround used by the full image; see Dockerfile.
+RUN pip install --no-cache-dir --retries 10 --timeout 60 pillow==12.3.0
+RUN pip install --no-cache-dir --retries 10 --timeout 60 --prefer-binary -r requirements-free.txt \
+    && python -c "import sklearn, pandas, numpy, streamlit; print('free deps ok')"
+
+COPY --chown=app:app emi_app ./emi_app
+COPY --chown=app:app pages ./pages
+COPY --chown=app:app app.py entrypoint.py ./
+COPY --chown=app:app .streamlit ./.streamlit
+
+# Only the compact models and the small EDA assets.
+COPY --chown=app:app \
+    models/lite_classification_model.pkl \
+    models/lite_regression_model.pkl \
+    models/lite_feature_info.json \
+    models/lite_metrics.json \
+    models/classification_label_encoder.pkl \
+    models/preprocessing_stats.json \
+    ./models/
+COPY --chown=app:app data/eda_sample_lite.csv.gz data/eda_summary.json ./data/
+
+USER app
+
+ENV PORT=8501
+EXPOSE 8501
+STOPSIGNAL SIGTERM
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+    CMD python -c "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:' + os.environ.get('PORT', '8501') + '/_stcore/health', timeout=3).read()"
+
+CMD ["python", "entrypoint.py"]

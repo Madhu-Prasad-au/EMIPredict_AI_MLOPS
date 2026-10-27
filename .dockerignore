@@ -35,6 +35,7 @@ data/emi_prediction_cleaned.csv
 data/financial_records.csv
 data/**
 !data/eda_sample.csv.gz
+!data/eda_sample_lite.csv.gz
 !data/eda_summary.json
 
 # ---------------------------------------------------------------------------

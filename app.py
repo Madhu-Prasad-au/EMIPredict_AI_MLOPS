@@ -10,7 +10,12 @@ from __future__ import annotations
 import streamlit as st
 
 from emi_app import config
-from emi_app.data import DataAssetError, load_eda_sample, load_reports, load_summary
+from emi_app.data import (
+    DataAssetError,
+    load_eda_preview,
+    load_reports,
+    load_summary,
+)
 from emi_app.ui import (
     footer,
     format_currency,
@@ -28,7 +33,14 @@ artifacts = get_artifacts_or_stop()
 sidebar(artifacts)
 
 summary = get_data_or_stop(load_summary, "EDA summary")
-reports = get_data_or_stop(load_reports, "Model performance reports")
+if artifacts.profile == "lite":
+    reports = None
+    classification_metrics = artifacts.metrics.get("classification", {})
+    regression_metrics = artifacts.metrics.get("regression", {})
+else:
+    reports = get_data_or_stop(load_reports, "Model performance reports")
+    classification_metrics = reports.classification_final_metrics
+    regression_metrics = reports.regression_final_metrics
 
 hero(
     "EMIPredict AI",
@@ -48,8 +60,6 @@ st.write("")
 total_records = int(summary.get("records", 0))
 class_counts = summary.get("class_counts", {})
 scenario_counts = summary.get("scenario_counts", {})
-classification_metrics = reports.classification_final_metrics
-regression_metrics = reports.regression_final_metrics
 
 c1, c2, c3, c4 = st.columns(4)
 with c1:
@@ -67,13 +77,13 @@ st.subheader("What the application does")
 left, right = st.columns([1.15, 1])
 with left:
     st.markdown(
-        """
+        f"""
         **1. Classification** answers *"Is this applicant eligible for the requested EMI?"*
-        using the saved XGBoost pipeline. The three classes are
+        using **{artifacts.classification_model_name}**. The three classes are
         **Eligible**, **High_Risk**, and **Not_Eligible**.
 
         **2. Regression** estimates the **maximum affordable monthly EMI** using
-        the saved Random Forest pipeline.
+        **{artifacts.regression_model_name}**.
 
         **3. Decision support** combines both outputs with the requested EMI
         (loan amount ÷ tenure) and highlights whether the request is within the
@@ -96,11 +106,18 @@ with right:
         "All artifacts are loaded once at process startup. Streamlit reruns, "
         "new sessions, and page navigation reuse the in-memory pipelines."
     )
-    st.warning(
-        "Model limitation: the training data included an `affordability_ratio` "
-        "feature derived from the regression target. The app reconstructs it "
-        "iteratively and flags approximate results. See Model Performance."
-    )
+    if artifacts.profile == "lite":
+        st.success(
+            "**Free/lite profile.** Compact HistGradientBoosting models trained "
+            "without the target-derived `affordability_ratio`. Built for 512 MB "
+            "instances; predictions differ from the full saved artifacts."
+        )
+    else:
+        st.warning(
+            "Model limitation: the training data included an `affordability_ratio` "
+            "feature derived from the regression target. The app reconstructs it "
+            "iteratively and flags approximate results. See Model Performance."
+        )
 
 st.divider()
 st.subheader("Open a workspace")
@@ -180,7 +197,7 @@ st.divider()
 st.subheader("Dataset snapshot")
 
 try:
-    sample = load_eda_sample()
+    preview = load_eda_preview()
 except DataAssetError as exc:
     st.warning(f"Dataset preview unavailable: {exc}")
 else:
@@ -193,13 +210,14 @@ else:
         "max_monthly_emi",
         "emi_eligibility",
     ]
-    available = [column for column in preview_columns if column in sample.columns]
+    available = [column for column in preview_columns if column in preview.columns]
     st.caption(
-        f"Stratified sample: {len(sample):,} rows · "
-        f"full cleaned dataset: {total_records:,} rows"
+        f"Preview of {len(preview)} rows · "
+        f"full cleaned dataset: {total_records:,} rows. "
+        "Open EDA Analytics for the full interactive sample."
     )
     st.dataframe(
-        sample[available].head(8),
+        preview[available],
         width="stretch",
         hide_index=True,
     )
@@ -212,31 +230,57 @@ else:
     )
 
 with st.expander("Model card, artifact provenance, and limitations"):
-    st.markdown(
-        f"""
-        **Artifacts**
+    if artifacts.profile == "lite":
+        st.markdown(
+            f"""
+            **Free/lite artifacts**
 
-        | Artifact | File | Loaded |
-        |---|---|---|
-        | Classification | `{artifacts.classification_path.name}` | {artifacts.classification_model_name} |
-        | Regression | `{artifacts.regression_path.name}` | {artifacts.regression_model_name} |
-        | Label encoder | `{config.LABEL_ENCODER_PATH.name}` | {len(artifacts.classification_classes)} classes |
-        | Feature metadata | `{config.FEATURE_INFO_PATH.name}` | {len(artifacts.feature_names)} features |
+            | Artifact | File | Loaded |
+            |---|---|---|
+            | Classification | `{artifacts.classification_path.name}` | {artifacts.classification_model_name} |
+            | Regression | `{artifacts.regression_path.name}` | {artifacts.regression_model_name} |
+            | Label encoder | `{config.LABEL_ENCODER_PATH.name}` | {len(artifacts.classification_classes)} classes |
+            | Feature metadata | `{config.LITE_FEATURE_INFO_PATH.name}` | {len(artifacts.feature_names)} features |
 
-        **Known modelling issue**
+            **Leakage-free compact model**
 
-        During training, `affordability_ratio` was computed as
-        `max_monthly_emi / monthly_salary`. Because `max_monthly_emi` is the
-        regression target, this is target leakage. The saved model cannot be
-        evaluated honestly without that value. This application starts from a
-        transparent income-based estimate and iterates the saved regression
-        model to a self-consistent ratio. Reported held-out metrics are the
-        original notebook metrics and are therefore optimistic.
+            This profile is a new HistGradientBoosting pair trained without the
+            target-derived `affordability_ratio` feature. It is designed to run
+            in 512 MB, so it is smaller and less expressive than the full saved
+            artifacts. Its held-out test metrics are shown on the Model
+            Performance page; do not compare them directly with the full
+            notebook metrics.
 
-        **Not financial advice.** This is a demonstration application; use a
-        validated, leakage-free model and human underwriting for real decisions.
-        """
-    )
+            **Not financial advice.** This is a demonstration application; use a
+            validated model and human underwriting for real decisions.
+            """
+        )
+    else:
+        st.markdown(
+            f"""
+            **Artifacts**
+
+            | Artifact | File | Loaded |
+            |---|---|---|
+            | Classification | `{artifacts.classification_path.name}` | {artifacts.classification_model_name} |
+            | Regression | `{artifacts.regression_path.name}` | {artifacts.regression_model_name} |
+            | Label encoder | `{config.LABEL_ENCODER_PATH.name}` | {len(artifacts.classification_classes)} classes |
+            | Feature metadata | `{config.FEATURE_INFO_PATH.name}` | {len(artifacts.feature_names)} features |
+
+            **Known modelling issue**
+
+            During training, `affordability_ratio` was computed as
+            `max_monthly_emi / monthly_salary`. Because `max_monthly_emi` is the
+            regression target, this is target leakage. The saved model cannot be
+            evaluated honestly without that value. This application starts from a
+            transparent income-based estimate and iterates the saved regression
+            model to a self-consistent ratio. Reported held-out metrics are the
+            original notebook metrics and are therefore optimistic.
+
+            **Not financial advice.** This is a demonstration application; use a
+            validated, leakage-free model and human underwriting for real decisions.
+            """
+        )
     st.markdown(
         f"Runtime: scikit-learn `{artifacts.runtime_versions.get('scikit-learn')}`, "
         f"xgboost `{artifacts.runtime_versions.get('xgboost')}`, "

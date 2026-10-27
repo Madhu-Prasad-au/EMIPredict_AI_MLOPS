@@ -14,6 +14,7 @@ from emi_app.service import run_smoke_test
 def build_health_snapshot(artifacts: ModelArtifacts) -> dict[str, Any]:
     data_assets = asset_status()
     missing_assets = [item["label"] for item in data_assets if not item["exists"]]
+    expected_features = 35 if artifacts.profile == "lite" else 36
     checks = {
         "artifacts_loaded": True,
         "classification_predict": callable(
@@ -25,7 +26,7 @@ def build_health_snapshot(artifacts: ModelArtifacts) -> dict[str, Any]:
         "regression_predict": callable(
             getattr(artifacts.regression_model, "predict", None)
         ),
-        "feature_count_matches": len(artifacts.feature_names) == 36,
+        "feature_count_matches": len(artifacts.feature_names) == expected_features,
         "classes_match": tuple(artifacts.classification_classes)
         == ("Eligible", "High_Risk", "Not_Eligible"),
         "categorical_metadata_present": all(
@@ -38,6 +39,7 @@ def build_health_snapshot(artifacts: ModelArtifacts) -> dict[str, Any]:
     return {
         "status": "ok" if healthy else "degraded",
         "healthy": healthy,
+        "profile": artifacts.profile,
         "checked_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "environment": config.ENVIRONMENT,
         "app_version": config.APP_VERSION,

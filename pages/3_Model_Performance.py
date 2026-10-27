@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import streamlit as st
 
 from emi_app import config
@@ -20,6 +22,68 @@ from emi_app.ui import (
 setup_page("Model Performance", icon="🤖")
 artifacts = get_artifacts_or_stop()
 sidebar(artifacts)
+
+if artifacts.profile == "lite":
+    metrics = artifacts.metrics
+    classification = metrics.get("classification", {})
+    regression = metrics.get("regression", {})
+    page_header(
+        "🤖 Model performance — free/lite profile",
+        "Held-out test metrics for the compact, leakage-free model pair used on "
+        "small 512 MB instances.",
+    )
+    st.warning(
+        "This is a **new compact model**, not the saved full artifact. It was "
+        "trained without the target-derived `affordability_ratio`, so its "
+        "predictions and metrics differ from the original notebook results. "
+        "Do not compare these numbers directly to the full model's leaky metrics."
+    )
+
+    c1, c2 = st.columns(2)
+    with c1:
+        with st.container(border=True):
+            st.markdown("### Classification")
+            st.success(artifacts.classification_model_name)
+            st.metric("Held-out F1", f"{classification.get('F1 Score', 0):.4f}")
+            st.metric("Held-out ROC-AUC", f"{classification.get('ROC-AUC', 0):.4f}")
+            st.caption(
+                f"Accuracy {classification.get('Accuracy', 0):.4f} · "
+                f"Precision {classification.get('Precision', 0):.4f} · "
+                f"Recall {classification.get('Recall', 0):.4f}"
+            )
+    with c2:
+        with st.container(border=True):
+            st.markdown("### Regression")
+            st.success(artifacts.regression_model_name)
+            st.metric(
+                "Held-out RMSE",
+                format_currency(regression.get("RMSE", 0), 2),
+            )
+            st.metric("Held-out R²", f"{regression.get('R2 Score', 0):.4f}")
+            st.caption(
+                f"MAE {format_currency(regression.get('MAE', 0), 2)} · "
+                f"MAPE {regression.get('MAPE (%)', 0):.2f}%"
+            )
+
+    st.subheader("Evaluation details")
+    st.json(metrics, expanded=False)
+    st.caption(
+        f"Training rows: {metrics.get('training_rows', 0):,} · "
+        f"test rows: {metrics.get('test_rows', 0):,} · "
+        f"features: {metrics.get('feature_count', len(artifacts.feature_names))}. "
+        "The compact profile is intentionally less expressive than the full "
+        "Random Forest, but it fits a 512 MB instance and has no target leakage."
+    )
+    st.download_button(
+        "⬇️ Download lite metrics (JSON)",
+        data=json.dumps(metrics, indent=2, default=str),
+        file_name="lite_metrics.json",
+        mime="application/json",
+        width="stretch",
+    )
+    footer()
+    st.stop()
+
 reports = get_data_or_stop(load_reports, "Model performance reports")
 
 page_header(

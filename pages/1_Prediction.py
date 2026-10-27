@@ -167,12 +167,18 @@ def _render_result(result: PredictionResult, application: ApplicationInput) -> N
             "The dataset and saved models do not include an interest rate, so "
             "this is a principal-only estimate."
         )
-        st.write(
-            f"**Reconstructed affordability ratio:** {result.affordability_ratio:.4f} "
-            f"(start: {result.base_affordability_ratio:.4f}, "
-            f"iterations: {result.ratio_iterations}, "
-            f"converged: {'yes' if result.ratio_converged else 'no'})"
-        )
+        if result.uses_reconstructed_ratio:
+            st.write(
+                f"**Reconstructed affordability ratio:** {result.affordability_ratio:.4f} "
+                f"(start: {result.base_affordability_ratio:.4f}, "
+                f"iterations: {result.ratio_iterations}, "
+                f"converged: {'yes' if result.ratio_converged else 'no'})"
+            )
+        else:
+            st.write(
+                "**Affordability ratio:** not used. This is the leakage-free "
+                "lite profile."
+            )
         st.write(
             f"**Models:** {result.model_names['classification']} + "
             f"{result.model_names['regression']} · "
@@ -181,78 +187,112 @@ def _render_result(result: PredictionResult, application: ApplicationInput) -> N
 
     st.divider()
     st.subheader("Financial ratios")
-    ratios = pd.DataFrame(
-        [
-            {
-                "Metric": "Total monthly expenses",
-                "Value": format_currency(application.total_monthly_expenses),
-            },
-            {
-                "Metric": "Total debt burden",
-                "Value": format_currency(application.total_debt_burden),
-            },
-            {
-                "Metric": "Remaining monthly income",
-                "Value": format_currency(application.remaining_income),
-            },
+    ratio_rows = [
+        {
+            "Metric": "Total monthly expenses",
+            "Value": format_currency(application.total_monthly_expenses),
+        },
+        {
+            "Metric": "Total debt burden",
+            "Value": format_currency(application.total_debt_burden),
+        },
+        {
+            "Metric": "Remaining monthly income",
+            "Value": format_currency(application.remaining_income),
+        },
+        {
+            "Metric": "Debt-to-income ratio",
+            "Value": f"{result.engineered_features['debt_to_income_ratio']:.2%}"
+            if result.engineered_features.get("debt_to_income_ratio") is not None
+            else "—",
+        },
+        {
+            "Metric": "Expense-to-income ratio",
+            "Value": f"{result.engineered_features['expense_to_income_ratio']:.2%}"
+            if result.engineered_features.get("expense_to_income_ratio") is not None
+            else "—",
+        },
+    ]
+    if result.uses_reconstructed_ratio:
+        ratio_rows.append(
             {
                 "Metric": "Affordability ratio (reconstructed)",
                 "Value": f"{result.affordability_ratio:.2%}",
-            },
-            {
-                "Metric": "Debt-to-income ratio",
-                "Value": f"{result.engineered_features['debt_to_income_ratio']:.2%}"
-                if result.engineered_features.get("debt_to_income_ratio") is not None
-                else "—",
-            },
-            {
-                "Metric": "Expense-to-income ratio",
-                "Value": f"{result.engineered_features['expense_to_income_ratio']:.2%}"
-                if result.engineered_features.get("expense_to_income_ratio") is not None
-                else "—",
-            },
-        ]
-    )
-    st.dataframe(ratios, width="stretch", hide_index=True)
+            }
+        )
+    st.dataframe(pd.DataFrame(ratio_rows), width="stretch", hide_index=True)
 
     with st.expander("🔧 Model input details"):
         st.write("**Raw applicant fields**")
         st.dataframe(raw_input_table(application), width="stretch", hide_index=True)
-        st.write("**Engineered features (training reproduction)**")
+        st.write("**Engineered features used by this profile**")
         engineered = feature_engineering_table(application, result.affordability_ratio)
+        engineered = engineered[
+            engineered["Field"].isin(set(artifacts.feature_names))
+        ].copy()
         engineered["Value"] = engineered["Value"].map(
             lambda value: f"{value:,.4f}" if isinstance(value, (int, float)) else "—"
         )
         st.dataframe(engineered, width="stretch", hide_index=True)
-        st.caption(
-            f"The saved pipeline expects {len(artifacts.feature_names)} features. "
-            "The classifier and regressor each contain their own imputer, scaler, "
-            "and one-hot encoder, so raw values are passed to the saved pipeline."
-        )
+        if artifacts.profile == "lite":
+            st.caption(
+                f"The compact pipeline expects {len(artifacts.feature_names)} "
+                "features. It contains its own imputer and one-hot encoder; raw "
+                "values are passed to the saved pipeline."
+            )
+        else:
+            st.caption(
+                f"The saved pipeline expects {len(artifacts.feature_names)} features. "
+                "The classifier and regressor each contain their own imputer, scaler, "
+                "and one-hot encoder, so raw values are passed to the saved pipeline."
+            )
 
     with st.expander("ℹ️ How this result is produced"):
-        st.markdown(
-            f"""
-            **Classification** — `{artifacts.classification_model_name}` predicts
-            one of {', '.join(artifacts.classification_classes)} and returns class
-            probabilities.
+        if artifacts.profile == "lite":
+            st.markdown(
+                f"""
+                **Profile:** compact, leakage-free lite model (for 512 MB instances).
 
-            **Regression** — `{artifacts.regression_model_name}` predicts the
-            maximum affordable monthly EMI.
+                **Classification** — `{artifacts.classification_model_name}` predicts
+                one of {', '.join(artifacts.classification_classes)} and returns class
+                probabilities.
 
-            **Target-derived feature reconstruction** — at training time the
-            feature `affordability_ratio` was `max_monthly_emi / monthly_salary`.
-            Because the target is unknown at prediction time, the app starts from
-            a conservative estimate (44% of positive remaining income over salary)
-            and repeatedly runs the saved regression model, setting the ratio to
-            `predicted_emi / salary`, until it stabilises. The reported prediction
-            is always made with the final reconstructed ratio.
+                **Regression** — `{artifacts.regression_model_name}` predicts the
+                maximum affordable monthly EMI.
 
-            **Interpretation** — the decision combines the predicted class with
-            the affordability check. It is decision support, not a credit
-            approval.
-            """
-        )
+                **No target-derived feature** — this model was trained without
+                `affordability_ratio`, so it does not need the iterative
+                reconstruction used by the full profile. Its predictions and
+                metrics differ from the full saved artifacts.
+
+                **Interpretation** — the decision combines the predicted class with
+                the affordability check. It is decision support, not a credit
+                approval.
+                """
+            )
+        else:
+            st.markdown(
+                f"""
+                **Classification** — `{artifacts.classification_model_name}` predicts
+                one of {', '.join(artifacts.classification_classes)} and returns class
+                probabilities.
+
+                **Regression** — `{artifacts.regression_model_name}` predicts the
+                maximum affordable monthly EMI.
+
+                **Target-derived feature reconstruction** — at training time the
+                feature `affordability_ratio` was `max_monthly_emi / monthly_salary`.
+                Because the target is unknown at prediction time, the app starts from
+                a conservative estimate (44% of positive remaining income over salary)
+                and repeatedly runs the saved regression model, setting the ratio to
+                `predicted_emi / salary`, until it stabilises. The reported prediction
+                is always made with the final reconstructed ratio.
+
+                **Interpretation** — the decision combines the predicted class with
+                the affordability check. It is decision support, not a credit
+                approval.
+                """
+            )
 
     st.download_button(
         "⬇️ Download this assessment (JSON)",
@@ -413,18 +453,32 @@ if not submitted and "last_prediction" in st.session_state:
     _render_result(cached["result"], cached["application"])
 
 with st.expander("Data quality and model caveats"):
-    st.markdown(
-        """
-        - Inputs are validated before inference. Categorical options come from
-          the saved one-hot encoder, not from hardcoded UI lists.
-        - `credit_score` is validated against the standard 300–900 range. The
-          cleaned training data contains a few 0 and 1200 values; those are
-          treated as data-quality issues rather than valid user input.
-        - The training target-derived `affordability_ratio` means the original
-          regression metrics are optimistic. See the Model Performance page.
-        - This page uses session-only state; no applicant data is written to
-          disk or persisted on the server.
-        """
-    )
+    if artifacts.profile == "lite":
+        st.markdown(
+            """
+            - Inputs are validated before inference. Categorical options come from
+              the lite model's saved one-hot encoder, not from hardcoded UI lists.
+            - `credit_score` is validated against the standard 300–900 range.
+            - This profile is a **new compact model** trained without the
+              target-derived `affordability_ratio`; its predictions and metrics
+              differ from the full saved artifacts.
+            - This page uses session-only state; no applicant data is written to
+              disk or persisted on the server.
+            """
+        )
+    else:
+        st.markdown(
+            """
+            - Inputs are validated before inference. Categorical options come from
+              the saved one-hot encoder, not from hardcoded UI lists.
+            - `credit_score` is validated against the standard 300–900 range. The
+              cleaned training data contains a few 0 and 1200 values; those are
+              treated as data-quality issues rather than valid user input.
+            - The training target-derived `affordability_ratio` means the original
+              regression metrics are optimistic. See the Model Performance page.
+            - This page uses session-only state; no applicant data is written to
+              disk or persisted on the server.
+            """
+        )
 
 footer()

@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from functools import lru_cache
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -75,9 +76,15 @@ def load_summary() -> dict[str, Any]:
         raise DataAssetError(f"Could not read EDA summary: {exc}") from exc
 
 
+def _eda_sample_path() -> Path:
+    if config.PROFILE == "lite":
+        return config.EDA_SAMPLE_LITE_PATH
+    return config.EDA_SAMPLE_PATH
+
+
 @lru_cache(maxsize=1)
 def load_eda_sample() -> pd.DataFrame:
-    path = config.EDA_SAMPLE_PATH
+    path = _eda_sample_path()
     if not path.is_file():
         raise DataAssetError(
             f"EDA sample not found: {path}. Run scripts/prepare_assets.py "
@@ -108,6 +115,26 @@ def load_eda_sample() -> pd.DataFrame:
             "EDA sample is missing columns: " + ", ".join(sorted(missing))
         )
     return frame
+
+
+@lru_cache(maxsize=1)
+def load_eda_preview(rows: int = 8) -> pd.DataFrame:
+    """Read only a few rows for the home page (does not load the full sample)."""
+    path = _eda_sample_path()
+    if not path.is_file():
+        raise DataAssetError(
+            f"EDA sample not found: {path}. Run scripts/prepare_assets.py "
+            "or rebuild the Docker image."
+        )
+    try:
+        return pd.read_csv(
+            path,
+            compression="gzip",
+            low_memory=False,
+            nrows=max(int(rows), 1),
+        )
+    except Exception as exc:  # noqa: BLE001
+        raise DataAssetError(f"Could not read EDA preview: {exc}") from exc
 
 
 @lru_cache(maxsize=1)
@@ -150,7 +177,7 @@ def asset_status() -> list[dict[str, Any]]:
     """Small status list for the health page."""
     items = [
         ("EDA summary", config.EDA_SUMMARY_PATH, True),
-        ("EDA sample", config.EDA_SAMPLE_PATH, True),
+        ("EDA sample", _eda_sample_path(), True),
         ("Classification comparison", config.REPORTS["classification_comparison"], True),
         ("Regression comparison", config.REPORTS["regression_comparison"], True),
         ("Final classification metrics", config.REPORTS["classification_final"], True),

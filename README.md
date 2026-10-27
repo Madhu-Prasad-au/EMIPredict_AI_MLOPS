@@ -15,9 +15,25 @@ no external runtime services, and is packaged as a non-root Docker image for
 Render.
 
 > **Important:** this is a machine-learning demonstration, not a credit
-> approval system. The saved regression model was trained with a
-> target-derived feature. See [Model limitation](#model-limitation-target-leakage)
-> before quoting any metric.
+> approval system. The **full profile's** regression model was trained with a
+> target-derived feature; see [Model limitation](#model-limitation-target-leakage).
+> The **free/lite profile** is a separate, leakage-free compact model.
+
+## Two deployment profiles
+
+| | Full profile (default) | Free/lite profile |
+|---|---|---|
+| Select with | `EMI_PROFILE=full` | `EMI_PROFILE=lite` |
+| Models | Saved XGBoost + 200-tree Random Forest | New compact HistGradientBoosting pair |
+| Features | 36, includes target-derived `affordability_ratio` | 35, leakage-free |
+| Memory | ~1.25 GB RSS; ~2.3 GB load peak | Designed for a 512 MB instance |
+| Image | `Dockerfile` / `render.yaml` | `Dockerfile.free` / `render-free.yaml` |
+| Render | Paid 4 GB instance | **Free 512 MB instance; no card** |
+| Metrics | Original notebook reports (optimistic regression) | Honest held-out test: F1 0.9795, R² 0.9940 |
+
+The lite models are new artifacts created for free hosting. They do **not**
+replace the saved full artifacts. The full profile remains the default for
+local/paid deployments.
 
 ---
 
@@ -59,20 +75,29 @@ emi_app/
 models/
   best_classification_model.pkl        XGBoost Pipeline (10.9 MB, committed)
   classification_label_encoder.pkl     LabelEncoder (committed)
-  feature_info.pkl                      Feature metadata (committed)
+  feature_info.pkl                      Full-profile feature metadata
   preprocessing_stats.json              Medians/ranges (committed)
-  best_regression_model_compressed.pkl  Random Forest Pipeline (295 MB, not committed)
-reports/                       Saved model comparison / final metrics CSVs
+  best_regression_model_compressed.pkl  Full Random Forest (295 MB, not committed)
+  lite_classification_model.pkl         Compact HistGradientBoosting classifier (~1 MB)
+  lite_regression_model.pkl             Compact HistGradientBoosting regressor (~0.3 MB)
+  lite_feature_info.json                Lite profile metadata (35 features)
+  lite_metrics.json                     Lite held-out test metrics
+reports/                       Saved full-model comparison / final metrics CSVs
 data/
   eda_sample.csv.gz            60,001-row stratified sample (5.8 MB)
+  eda_sample_lite.csv.gz       20,001-row sample for the free profile (1.9 MB)
   eda_summary.json             Full-dataset aggregates (404,800 rows)
 scripts/
   prepare_assets.py            Rebuilds the compact EDA assets (needs full CSV)
-  fetch_model.py               Downloads/verifies the large regression artifact
+  train_lite_models.py         Trains the compact, leakage-free lite pair
+  fetch_model.py               Downloads/verifies the large full regression artifact
   smoke_test.py                End-to-end artifact + prediction test
-Dockerfile
-render.yaml
-requirements.txt
+Dockerfile                     Full-profile image
+Dockerfile.free                Free/lite 512 MB image
+render.yaml                    Paid 4 GB full-profile Blueprint
+render-free.yaml               Free 512 MB lite-profile Blueprint
+requirements.txt               Full-profile dependencies
+requirements-free.txt          Lite-profile dependencies (no xgboost)
 .dockerignore
 .gitignore
 ```
@@ -146,24 +171,38 @@ shipped.
 ### Prerequisites
 
 - Python **3.12** (the artifacts were saved with Python 3.12 / sklearn 1.9.0)
-- ~2.5 GB free RAM while loading the Random Forest
-- The small artifacts in `models/` and the two `data/eda_*` assets
+- **Full profile:** ~2.5 GB free RAM while loading the Random Forest, plus the
+  295 MB compressed artifact
+- **Lite profile:** ~512 MB RAM; only the small model files and the lite EDA
+  sample
+
+**Full profile (default):**
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 pip install -r requirements.txt
-```
-
-Make sure the 295 MB compressed regression artifact is present (see above).
-Then:
-
-```powershell
 python entrypoint.py
 ```
 
-`entrypoint.py` loads and validates all artifacts **once**, then starts
+Make sure `models/best_regression_model_compressed.pkl` is present (see above).
+
+**Free/lite profile:**
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements-free.txt
+$env:EMI_PROFILE = "lite"
+python entrypoint.py
+```
+
+The lite artifacts are already in `models/`; the full 295 MB model is not
+needed. If you need to regenerate them, see
+[Lite model training](#lite-model-training).
+
+`entrypoint.py` loads and validates the selected artifacts **once**, then starts
 Streamlit on `PORT` (default `8501`). Open <http://localhost:8501>. The built-in
 health endpoint is <http://localhost:8501/_stcore/health>.
 
@@ -182,7 +221,12 @@ python scripts/smoke_test.py
 
 The smoke test loads the artifacts, validates a median applicant, runs both
 models twice, checks determinism, and asserts that invalid inputs produce clear
-validation errors.
+validation errors. For the lite profile:
+
+```powershell
+$env:EMI_PROFILE = "lite"
+python scripts/smoke_test.py
+```
 
 ### Troubleshooting
 
@@ -193,21 +237,55 @@ validation errors.
   `pillow==12.3.0` first, then `pip install -r requirements.txt`. The Dockerfile
   does this in a separate layer; a combined resolver run occasionally
   misreports the available wheel on some pip/BuildKit combinations.
-- **Container killed during startup:** the Random Forest needs ~1.25 GB RSS and
-  peaked at ~2.3 GB while unpickling. Use a 4 GB instance.
+- **Container killed during startup:** the full Random Forest needs ~1.25 GB RSS
+  and peaked at ~2.3 GB while unpickling. Use a 4 GB instance, or use the lite
+  profile (`Dockerfile.free` + `EMI_PROFILE=lite`).
 - **`best_regression_model_compressed.pkl` missing:** run
   `scripts/fetch_model.py` with the URL and SHA-256 above.
 - **Model download timeout in Docker:** ensure the build host can reach
   `huggingface.co`; the fetch script retries three times and verifies the hash.
+- **Lite predictions differ from the original demo:** expected. The lite pair is
+  a new, leakage-free model; see its held-out metrics on the Model Performance
+  page.
 
 ### Rebuilding EDA assets (optional)
 
 Only needed if `data/emi_prediction_cleaned.csv` is present and you want to
-regenerate the sample/summary:
+regenerate the samples/summary:
 
 ```powershell
 python scripts/prepare_assets.py
 ```
+
+### Lite model training
+
+The free/lite artifacts are already committed. To retrain them (requires the
+full cleaned CSV):
+
+```powershell
+python scripts/train_lite_models.py
+```
+
+This trains a compact `HistGradientBoostingClassifier` and
+`HistGradientBoostingRegressor` on 35 features, excluding the target-derived
+`affordability_ratio`. It writes:
+
+```text
+models/lite_classification_model.pkl
+models/lite_regression_model.pkl
+models/lite_feature_info.json
+models/lite_metrics.json
+```
+
+Held-out test results from the current artifacts:
+
+| Lite model | Metric |
+|---|---:|
+| Classification | Accuracy 0.9804, F1 0.9795, ROC-AUC 0.9991 |
+| Regression | RMSE ₹595.66, MAE ₹200.22, R² 0.9940, MAPE 7.12% |
+
+These are honest, leakage-free metrics. They are lower than the full model's
+reported regression R², but the full number is inflated by target leakage.
 
 ---
 
@@ -231,6 +309,16 @@ Then:
 curl.exe http://localhost:8501/_stcore/health
 # ok
 ```
+
+**Free/lite image (512 MB):**
+
+```powershell
+docker build -f Dockerfile.free -t emi-predict-ai:free .
+docker run --rm -p 8501:8501 -e PORT=8501 emi-predict-ai:free
+```
+
+The free image installs no XGBoost and does not contain or download the 295 MB
+full model. It was validated under a 512 MB container memory limit.
 
 The image:
 
@@ -293,6 +381,44 @@ the file in `models/`; do not bake tokens into the Dockerfile.
    test. Also verify `https://<service>.onrender.com/_stcore/health` returns
    `ok`.
 
+### Render Free (no card) — lite profile
+
+Use this path if you do not want to add a payment method. It runs the compact,
+leakage-free models on Render's **0.1 CPU / 512 MB Free** instance.
+
+**Option 1 — Blueprint:**
+
+1. In Render, choose **New → Blueprint** and select this repository.
+2. When prompted for the Blueprint path, use `render-free.yaml` (Render may
+   auto-detect only `render.yaml`; the dashboard lets you choose the file, or
+   create the service manually below).
+3. Confirm:
+   - Runtime: **Docker**
+   - Dockerfile: `./Dockerfile.free`
+   - Plan: **Free**
+   - Health check: `/_stcore/health`
+   - Env: `EMI_PROFILE=lite`, `EMI_ENV=production`, `EMI_LOG_LEVEL=INFO`
+4. Create the service. No card is required on the Free plan.
+
+**Option 2 — normal Web Service (recommended if the dashboard only reads
+`render.yaml`):**
+
+1. **New → Web Service** → connect the GitHub repo.
+2. Branch `main`.
+3. Runtime **Docker**; Dockerfile path `./Dockerfile.free`; context `.`.
+4. Instance type **Free**.
+5. Health check path `/_stcore/health`.
+6. Add `EMI_PROFILE=lite` (plus optional `EMI_ENV`, `EMI_LOG_LEVEL`).
+7. Create.
+
+The free image does **not** install XGBoost or download the 295 MB model. It
+starts quickly and contains only the compact models. Render Free still sleeps
+after 15 minutes of inactivity and takes about a minute to wake.
+
+If Render insists on a card even when **Free** is selected, that is an
+account/region verification restriction rather than a project setting; use a
+Hugging Face Docker Space instead.
+
 ### Render notes
 
 - Render injects `PORT`; the app binds to it. Do not define `PORT` manually.
@@ -300,13 +426,18 @@ the file in `models/`; do not bake tokens into the Dockerfile.
 - The Docker build requires outbound access to Docker Hub, PyPI, and the
   Hugging Face URL during the first build. If your build environment blocks
   Hugging Face, pre-place the artifact via Git LFS or a private mirror.
-- Render's free/512 MB instances cannot load this model. Use the 4 GB plan.
+- Render's free/512 MB instances cannot load the **full** model. Use the
+  `render-free.yaml` lite profile there, or the 4 GB plan for the full model.
 - If you change `render.yaml` to a plan ID your workspace cannot use, the
   Blueprint sync will fail; confirm plan availability/pricing in the dashboard.
 
 ---
 
 ## Model limitation: target leakage
+
+This section describes the **full profile**. The free/lite profile uses a new
+compact model trained without the leaky feature, so it does not have this
+problem.
 
 The training notebook created this feature **before** the train/test split:
 
@@ -320,8 +451,7 @@ importance to this feature; `remaining_income` is the dominant feature (~79%).
 The reported regression R² of 0.998 is therefore **optimistic and not
 reproducible in production**.
 
-This project does **not** retrain the models (the artifacts are loadable). At
-inference it:
+The **full profile** does not retrain the saved models. At inference it:
 
 1. Starts with a transparent estimate of 44% of positive remaining income over
    salary.
@@ -332,8 +462,13 @@ inference it:
 
 The result is internally consistent with the saved pipeline, but it is an
 approximation. The UI flags non-converged ratios and low classification
-confidence. The correct long-term fix is a leakage-free retrain and a fresh
-evaluation; that is deliberately out of scope here.
+confidence.
+
+The **free/lite profile** is the leakage-free alternative: it trains a compact
+HistGradientBoosting pair on 35 features with `affordability_ratio` excluded.
+Its held-out R² is 0.9940 with MAPE 7.12%, which is lower than the full model's
+leaky 0.998 but honest and reproducible. It is a new model, not a modification
+of the original artifacts.
 
 Other caveats:
 
@@ -350,9 +485,11 @@ Other caveats:
 
 ## Preprocessing fidelity
 
-The saved pipelines contain their own `SimpleImputer`, `StandardScaler`, and
-`OneHotEncoder`; the app passes raw values and lets each pipeline transform
-them. The notebook's 11 engineered features are reproduced exactly:
+The full pipelines contain their own `SimpleImputer`, `StandardScaler`, and
+`OneHotEncoder`; the lite pipelines contain an imputer and one-hot encoder (the
+tree models do not need scaling). The app passes raw values and lets each
+pipeline transform them. The notebook's 11 engineered features are reproduced
+exactly:
 
 ```text
 total_monthly_expenses = monthly_rent + school_fees + college_fees
@@ -381,6 +518,11 @@ values (`Medium`, `Large`); the model's actual categories are `Large Indian`,
 
 ## Saved model results (as reported, not re-evaluated)
 
+### Full profile — original saved artifacts
+
+These are the original notebook results. The regression numbers are inflated by
+target leakage; read the caveat above.
+
 | Classification | Accuracy | Precision | Recall | F1 | ROC-AUC |
 |---|---:|---:|---:|---:|---:|
 | XGBoost (best) | 0.9884 | 0.9881 | 0.9884 | 0.9882 | 0.9997 |
@@ -394,7 +536,22 @@ values (`Medium`, `Large`); the model's actual categories are `Large Indian`,
 | Linear Regression | 3466.83 | 2198.92 | 0.7995 | 134.24% |
 
 Held-out test cards come from `reports/final_*_metrics.csv`; comparison tables
-come from the validation run. Read the leakage caveat before using these numbers.
+come from the validation run.
+
+### Free/lite profile — new leakage-free model
+
+Held-out test results from `python scripts/train_lite_models.py`:
+
+| Lite model | Accuracy | F1 | ROC-AUC |
+|---|---:|---:|---:|
+| HistGradientBoostingClassifier | 0.9804 | 0.9795 | 0.9991 |
+
+| Lite model | RMSE | MAE | R² | MAPE |
+|---|---:|---:|---:|---:|
+| HistGradientBoostingRegressor | ₹595.66 | ₹200.22 | 0.9940 | 7.12% |
+
+The lite metrics are lower than the full regression numbers, but they are
+honest and do not depend on the target. They come from a 15% held-out test set.
 
 ---
 
@@ -434,8 +591,8 @@ and report assets exist.
    `entrypoint.py` preloads and validates everything before serving, and the
    Docker build downloads/verifies the artifact once.
 6. **Huge data in the image.** The 75 MB raw CSV and 143 MB cleaned CSV are
-   excluded. The app ships a 5.8 MB stratified sample and a 12 KB full-dataset
-   summary; full-dataset headline metrics remain available.
+   excluded. The full profile ships a 5.8 MB sample; the lite profile ships a
+   1.9 MB sample. Both use the 12 KB full-dataset summary.
 7. **Non-durable CRUD.** Removed the CSV write path; history is session-only.
 8. **CPU-only XGBoost.** `xgboost-cpu==3.4.1` avoids the NCCL/CUDA dependency
    pulled by the full wheel while preserving 3.4.1 pickle compatibility.
@@ -472,6 +629,18 @@ and report assets exist.
   the Docker build downloaded the artifact from Hugging Face, printed
   `Downloaded 295,141,016 bytes; SHA-256: a321224177d43c5e7de64c8bc98fa0f15689240ba7f521c29139ca412cd9e401`,
   and passed the same prediction smoke test. This is the exact path Render uses.
+- Trained the free/lite pair on 404,800 rows with `affordability_ratio`
+  excluded. Held-out test: classification F1 **0.9795**, ROC-AUC **0.9991**;
+  regression R² **0.9940**, RMSE **₹595.66**, MAPE **7.12%**. Artifact sizes:
+  **0.96 MB** classifier, **0.32 MB** regressor.
+- Built `Dockerfile.free` (image **757 MB**) and ran it with a hard
+  **`-m 512M`** memory limit:
+  - one-off prediction succeeded as UID 10001 in **27 ms**;
+  - the Streamlit server returned **200 `ok`** at `/_stcore/health` and **200**
+    for the home page;
+  - AppTest passed for the prediction page (including form submit) and the EDA
+    page under the same 512 MB limit.
+  This is the target Render Free environment.
 
 ---
 

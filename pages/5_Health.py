@@ -73,6 +73,9 @@ with c4:
         ),
     )
 
+st.caption(f"Active profile: `{artifacts.profile}` · "
+           f"{artifacts.classification_model_name} + {artifacts.regression_model_name}")
+
 st.info(
     f"Platform health endpoint: `{snapshot['health_endpoint']}`. "
     "It reports whether the Streamlit server is accepting connections. "

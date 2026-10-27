@@ -1,0 +1,16 @@
+# EMIPredict AI — free/lite profile dependencies.
+#
+# This profile intentionally omits xgboost. It loads only the compact
+# HistGradientBoosting pipelines, which keeps the runtime small enough for a
+# 512 MB Render Free instance. The full profile's requirements.txt keeps the
+# original pinned XGBoost dependency.
+#
+# Verified with Python 3.12 / scikit-learn 1.9.0.
+streamlit==1.62.0
+pandas==2.3.3
+numpy==2.5.2
+scikit-learn==1.9.0
+joblib==1.5.3
+scipy==1.18.1
+pyarrow==25.0.1
+pillow==12.3.0

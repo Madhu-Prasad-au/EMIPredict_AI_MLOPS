@@ -73,6 +73,7 @@ class PredictionResult:
     base_affordability_ratio: float
     ratio_iterations: int
     ratio_converged: bool
+    uses_reconstructed_ratio: bool
     decision: str
     decision_label: str
     recommendation: str
@@ -244,43 +245,45 @@ def predict(
 ) -> PredictionResult:
     """Run classification + regression for one validated applicant.
 
-    The target-derived `affordability_ratio` is reconstructed with a fixed-point
-    loop: start from a transparent 44%-of-remaining-income estimate, run the
-    regression, set the ratio to predicted_emi/salary, and repeat. The final
-    reported prediction is always produced by the saved pipeline with the final
-    ratio, so the result is internally consistent.
+    Full profile: the target-derived `affordability_ratio` is reconstructed with
+    a fixed-point loop, because the saved full model expects it.
+
+    Lite profile: the compact leakage-free model does not use that feature, so a
+    single regression call is made.
     """
     started = time.perf_counter()
     salary = application.monthly_salary
     if salary <= 0 or not math.isfinite(salary):
         raise PredictionError("Monthly salary must be a positive finite number.")
 
-    base_ratio = base_affordability_ratio(application)
-    ratio = base_ratio
-    converged = False
+    uses_reconstructed_ratio = "affordability_ratio" in artifacts.feature_names
+    base_ratio = 0.0
+    ratio = 0.0
+    converged = True
     iterations = 0
-    last_emi = 0.0
 
-    for iteration in range(1, config.AFFORDABILITY_ITERATIONS + 1):
-        iterations = iteration
-        frame = build_feature_frame(
-            application,
-            artifacts.feature_names,
-            ratio,
-            artifacts.numeric_fill_values,
-        )
-        emi = _regression_prediction(artifacts, frame)
-        new_ratio = _ratio_from_emi(emi, salary)
-        last_emi = emi
-        if abs(new_ratio - ratio) <= config.AFFORDABILITY_TOLERANCE:
-            ratio = new_ratio
-            converged = True
-            break
-        # Direct update: the forest response is piecewise constant, so the ratio
-        # either reaches a stable self-consistent value quickly or the loop is
-        # reported as approximate. Damping is intentionally avoided because it
-        # slows convergence without changing the fixed point.
-        ratio = _clip_ratio(new_ratio)
+    if uses_reconstructed_ratio:
+        base_ratio = base_affordability_ratio(application)
+        ratio = base_ratio
+        converged = False
+        for iteration in range(1, config.AFFORDABILITY_ITERATIONS + 1):
+            iterations = iteration
+            frame = build_feature_frame(
+                application,
+                artifacts.feature_names,
+                ratio,
+                artifacts.numeric_fill_values,
+            )
+            emi = _regression_prediction(artifacts, frame)
+            new_ratio = _ratio_from_emi(emi, salary)
+            if abs(new_ratio - ratio) <= config.AFFORDABILITY_TOLERANCE:
+                ratio = new_ratio
+                converged = True
+                break
+            # Direct update: the forest response is piecewise constant, so the
+            # ratio either reaches a stable self-consistent value quickly or the
+            # loop is reported as approximate.
+            ratio = _clip_ratio(new_ratio)
 
     # Always report a prediction made with the final ratio.
     final_frame = build_feature_frame(
@@ -311,7 +314,7 @@ def predict(
             "The classification confidence is below 60%. Treat the eligibility "
             "result as uncertain and review the probability distribution."
         )
-    if not converged:
+    if uses_reconstructed_ratio and not converged:
         warnings_list.append(
             "The reconstructed affordability ratio did not fully converge within "
             f"{config.AFFORDABILITY_ITERATIONS} iterations. The EMI estimate is "
@@ -333,9 +336,10 @@ def predict(
 
     elapsed_ms = (time.perf_counter() - started) * 1000.0
     logger.info(
-        "Prediction completed in %.1f ms: class=%s max_emi=%.2f requested=%.2f "
-        "ratio_iterations=%d converged=%s",
+        "Prediction completed in %.1f ms: profile=%s class=%s max_emi=%.2f "
+        "requested=%.2f ratio_iterations=%d converged=%s",
         elapsed_ms,
+        artifacts.profile,
         eligibility,
         predicted_max_emi,
         requested_emi,
@@ -355,6 +359,7 @@ def predict(
         base_affordability_ratio=round(float(base_ratio), 6),
         ratio_iterations=iterations,
         ratio_converged=bool(converged),
+        uses_reconstructed_ratio=uses_reconstructed_ratio,
         decision=decision,
         decision_label=DECISION_META[decision]["label"],
         recommendation=recommendation,

@@ -1,0 +1,41 @@
+{
+  "profile": "lite",
+  "generated_at_utc": "2026-10-27T18:09:52+00:00",
+  "training_rows": 283360,
+  "validation_rows": 60720,
+  "test_rows": 60720,
+  "feature_count": 35,
+  "model_names": {
+    "classification": "HistGradientBoostingClassifier (lite)",
+    "regression": "HistGradientBoostingRegressor (lite)"
+  },
+  "validation": {
+    "classification": {
+      "Accuracy": 0.980122,
+      "Precision": 0.979102,
+      "Recall": 0.980122,
+      "F1 Score": 0.979233,
+      "ROC-AUC": 0.999058
+    },
+    "regression": {
+      "RMSE": 618.6925,
+      "MAE": 199.0343,
+      "R2 Score": 0.993613,
+      "MAPE (%)": 7.1542
+    }
+  },
+  "classification": {
+    "Accuracy": 0.980385,
+    "Precision": 0.97938,
+    "Recall": 0.980385,
+    "F1 Score": 0.979498,
+    "ROC-AUC": 0.999054
+  },
+  "regression": {
+    "RMSE": 595.6621,
+    "MAE": 200.2201,
+    "R2 Score": 0.99403,
+    "MAPE (%)": 7.1234
+  },
+  "notes": "Compact, leakage-free profile for small instances. affordability_ratio (target-derived) is excluded. This is a new model pair and does not replace the saved full artifacts."
+}

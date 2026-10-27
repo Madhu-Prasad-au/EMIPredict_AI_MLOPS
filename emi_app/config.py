@@ -14,6 +14,12 @@ APP_NAME = "EMIPredict AI"
 APP_SLUG = "emi-predict-ai"
 APP_VERSION = "1.0.0"
 
+# "full" = the original saved pipelines (large, leaks affordability_ratio).
+# "lite" = compact, leakage-free HistGradientBoosting pair for 512 MB free
+# instances. Select with EMI_PROFILE=lite.
+PROFILE = os.environ.get("EMI_PROFILE", "full").strip().lower()
+VALID_PROFILES = frozenset({"full", "lite"})
+
 ROOT_DIR = Path(__file__).resolve().parents[1]
 
 
@@ -38,7 +44,14 @@ LABEL_ENCODER_PATH = MODELS_DIR / "classification_label_encoder.pkl"
 FEATURE_INFO_PATH = MODELS_DIR / "feature_info.pkl"
 PREPROCESSING_STATS_PATH = MODELS_DIR / "preprocessing_stats.json"
 
+# Compact "free" profile artifacts.
+LITE_CLASSIFICATION_MODEL_PATH = MODELS_DIR / "lite_classification_model.pkl"
+LITE_REGRESSION_MODEL_PATH = MODELS_DIR / "lite_regression_model.pkl"
+LITE_FEATURE_INFO_PATH = MODELS_DIR / "lite_feature_info.json"
+LITE_METRICS_PATH = MODELS_DIR / "lite_metrics.json"
+
 EDA_SAMPLE_PATH = DATA_DIR / "eda_sample.csv.gz"
+EDA_SAMPLE_LITE_PATH = DATA_DIR / "eda_sample_lite.csv.gz"
 EDA_SUMMARY_PATH = DATA_DIR / "eda_summary.json"
 
 REPORTS = {
